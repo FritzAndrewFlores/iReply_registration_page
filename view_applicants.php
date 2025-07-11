@@ -3,7 +3,13 @@
 $conn = new mysqli("localhost", "root", "", "ireply");
 
 // Fetch applicants
-$result = $conn->query("SELECT * FROM applicants");
+$search = '';
+if (isset($_GET['search'])) {
+    $search = $conn->real_escape_string($_GET['search']);
+    $result = $conn->query("SELECT * FROM applicants WHERE first_name LIKE '%$search%' OR last_name LIKE '%$search%' ORDER BY submitted_at DESC");
+} else {
+    $result = $conn->query("SELECT * FROM applicants ORDER BY submitted_at DESC");
+}
 ?>
 
 <!DOCTYPE html>
@@ -72,6 +78,7 @@ $result = $conn->query("SELECT * FROM applicants");
       background-color: #00b894 !important;
       color: white !important;
     }
+
   </style>
 </head>
 <body>
@@ -82,12 +89,28 @@ $result = $conn->query("SELECT * FROM applicants");
 
   <div class="admin-buttons">
     <button>Administration</button>
-    <button>Users</button>
+    <button>Manage Users</button>
     <button>Settings</button>
   </div>
 
   <div class="applicants-container">
-    <h2>Applicants</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2 style="margin: 0;">Applicants</h2>
+    <form method="GET" action="view_applicants.php" style="display: inline-block;">
+        <div style="position: relative; display: inline-flex; height: 36px;">
+            <input type="text" name="search" placeholder="Search by name" value="<?= htmlspecialchars($search ?? '') ?>"
+                   style="padding: 0 10px; height: 100%; border: 1px solid #ccc; border-radius: 4px; width: 200px; padding-right: 40px; font-size: 14px;">
+            <button type="submit" 
+                    style="position: absolute; right: 0; top: 0; height: 100%; width: 40px; background-color: #1f253a; color: white; border: none; border-radius: 0 4px 4px 0; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+        </div>
+    </form>
+    </div>
+
     <table>
       <thead>
         <tr>
@@ -98,6 +121,7 @@ $result = $conn->query("SELECT * FROM applicants");
           <th>Phone Number</th>
           <th>Attachments</th>
           <th>Role</th>
+          <th>Date & Time Applied</th> <!-- Added -->
         </tr>
       </thead>
       <tbody>
@@ -110,9 +134,11 @@ $result = $conn->query("SELECT * FROM applicants");
           <td><?= $row["phone"] ?></td>
           <td><a href="<?= $row["resume_path"] ?>" target="_blank">View Resume</a></td>
           <td>Applicant</td>
+          <td><?= date("F j, Y - H:i", strtotime($row["submitted_at"])) ?></td>
         </tr>
         <?php endwhile; ?>
       </tbody>
+
     </table>
   </div>
 
